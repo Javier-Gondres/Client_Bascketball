@@ -5,18 +5,37 @@ import {
    FlatList,
    Image,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { colors } from "@/UI/colors";
 import { TextInput, Text } from "react-native-paper";
 import { fontSizes } from "@/UI/fontSizes";
 import { spacings } from "@/UI/spacings";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FontAwesome } from "@expo/vector-icons";
+import { ports } from "@/config/config";
+import { Jugador } from "@/interfaces/entities";
 
 const jugador = () => {
+   const [jugadores, setJugadores] = useState<Jugador[]>([]);
    const [crudMode, setCrudMode] = useState<"create" | "delete" | "none">(
       "none"
    );
+
+   useEffect(() => {
+      const fetchData = async () => {
+         try {
+            const response = await fetch(`${ports.api}/jugador`, {
+               method: "GET",
+            });
+            const data: Jugador[] = await response.json();
+            setJugadores(data);
+         } catch (error) {
+            console.error(error);
+         }
+      };
+
+      fetchData();
+   }, []);
 
    return (
       <SafeAreaView
@@ -86,7 +105,11 @@ const jugador = () => {
                   />
                </TouchableOpacity>
                <TouchableOpacity
-                  onPress={() => setCrudMode("delete")}
+                  onPress={() =>
+                     crudMode === "delete"
+                        ? setCrudMode("none")
+                        : setCrudMode("delete")
+                  }
                   style={{
                      backgroundColor:
                         crudMode === "delete"
@@ -111,7 +134,7 @@ const jugador = () => {
                </TouchableOpacity>
             </View>
             <FlatList
-               data={[1, 2, 3]}
+               data={jugadores}
                numColumns={2}
                columnWrapperStyle={{ gap: 10 }}
                contentContainerStyle={{ gap: 10, paddingBottom: 10 }}
@@ -153,7 +176,8 @@ const jugador = () => {
                               textAlign: "center",
                            }}
                         >
-                           Javier Emilio Gondres Dominguez
+                           {item.Nombre1} {item.Nombre2} {item.Apellido1}{" "}
+                           {item.Apellido2}
                         </Text>
                         <Text
                            style={{
@@ -162,7 +186,7 @@ const jugador = () => {
                               textAlign: "center",
                            }}
                         >
-                           Codigo: ABC23
+                           Codigo: {item.CodJugador}
                         </Text>
                         <Text
                            style={{
@@ -171,7 +195,7 @@ const jugador = () => {
                               textAlign: "center",
                            }}
                         >
-                           Numero: 20
+                           Numero: {item.Numero}
                         </Text>
                      </View>
                   </TouchableOpacity>
