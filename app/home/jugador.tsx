@@ -17,17 +17,23 @@ import { colors } from "@/UI/colors";
 import { fontSizes } from "@/UI/fontSizes";
 import { spacings } from "@/UI/spacings";
 import { ports } from "@/config/config";
-import { Jugador } from "@/interfaces/entities";
 import CBottomSheetModal from "@/components/CBottomsheet";
 import JugadorFormulario from "@/components/jugadorFormulario/jugadorFormulario";
 import PopUp from "@/components/popup/PopUp";
+import LottieView from "lottie-react-native";
+import { Jugador } from "@/interfaces/entities";
+import { showMessage, hideMessage } from "react-native-flash-message";
+interface CustomJugador extends Jugador {
+   selectedAsset: any;
+   assetType: "lottie" | "image";
+}
 
 const Jugadores = () => {
-   const [jugadores, setJugadores] = useState<Jugador[]>([]);
+   const [jugadores, setJugadores] = useState<CustomJugador[]>([]);
    const [searchQuery, setSearchQuery] = useState("");
-   const [selected, setSelected] = useState<Jugador | null>(null);
+   const [selected, setSelected] = useState<CustomJugador | null>(null);
    const [selectedToRemove, setSelectedToRemove] = useState<
-      Map<string, Jugador>
+      Map<string, CustomJugador>
    >(new Map());
    const [crudMode, setCrudMode] = useState<"create" | "delete" | "none">(
       "none"
@@ -46,7 +52,33 @@ const Jugadores = () => {
       try {
          const response = await fetch(`${ports.api}/jugador`);
          const data: Jugador[] = await response.json();
-         setJugadores(data);
+
+         const assets = [
+            {
+               source: require("../../assets/lotties/prieto.json"),
+               type: "lottie",
+            },
+            {
+               source: require("../../assets/lotties/blanquito.json"),
+               type: "lottie",
+            },
+            {
+               source: require("../../assets/images/peter-griffin-basketball.gif"),
+               type: "image",
+            },
+         ];
+
+         const updatedData: CustomJugador[] = data.map((player) => {
+            const randomIndex = Math.floor(Math.random() * assets.length);
+            const selectedAsset = assets[randomIndex];
+            return {
+               ...player,
+               selectedAsset: selectedAsset.source,
+               assetType: selectedAsset.type,
+            } as CustomJugador;
+         });
+
+         setJugadores(updatedData);
       } catch (error) {
          console.error(error);
       }
@@ -55,7 +87,7 @@ const Jugadores = () => {
    const presentBottomSheet = () => bottomSheetCreate.current?.present();
    const closeBottomSheet = () => bottomSheetCreate.current?.close();
 
-   const createJugador = async (jugadorData: Partial<Jugador>) => {
+   const createJugador = async (jugadorData: Partial<CustomJugador>) => {
       try {
          const response = await fetch(`${ports.api}/jugador`, {
             method: "POST",
@@ -65,21 +97,30 @@ const Jugadores = () => {
 
          if (!response.ok) {
             throw new Error(
-               `Error al crear el jugador: ${response.statusText}`
+               `Error al crear el jugador: ${await response.json()}`
             );
          }
 
-         const data: Jugador = await response.json();
+         const data: CustomJugador = await response.json();
          setJugadores((prev) => [data, ...prev]);
-         console.log("Jugador creado:", data.CodJugador);
+         showMessage({
+            message: "Jugador creado",
+            backgroundColor: colors.blue.blue400,
+            textStyle: { fontSize: fontSizes.regular },
+         });
+         console.log("CustomJugador creado:", data.CodJugador);
       } catch (error) {
          console.error("Error al crear el jugador:", error);
+         showMessage({
+            message: "Algo salio mal",
+            backgroundColor: colors.red.red500,
+         });
       }
    };
 
    const updateJugador = async (
       codigo: string,
-      jugadorData: Partial<Jugador>
+      jugadorData: Partial<CustomJugador>
    ) => {
       try {
          const response = await fetch(`${ports.api}/jugador/${codigo}`, {
@@ -90,17 +131,34 @@ const Jugadores = () => {
 
          if (!response.ok) {
             throw new Error(
-               `Error al actualizar el jugador: ${response.statusText}`
+               `Error al actualizar el jugador: ${await response.json()}`
             );
          }
 
-         const data: Jugador = await response.json();
+         const data: CustomJugador = await response.json();
          setJugadores((prev) =>
-            prev.map((j) => (j.CodJugador === data.CodJugador ? data : j))
+            prev.map((j) =>
+               j.CodJugador === data.CodJugador
+                  ? {
+                       ...data,
+                       assetType: j.assetType,
+                       selectedAsset: j.selectedAsset,
+                    }
+                  : j
+            )
          );
-         console.log("Jugador actualizado:", data.CodJugador);
+         showMessage({
+            message: "Jugador actualizado",
+            backgroundColor: colors.blue.blue400,
+            textStyle: { fontSize: fontSizes.medium },
+         });
+         console.log("CustomJugador actualizado:", data.CodJugador);
       } catch (error) {
          console.error("Error al actualizar el jugador:", error);
+         showMessage({
+            message: "Algo salio mal",
+            backgroundColor: colors.red.red500,
+         });
       }
    };
 
@@ -122,7 +180,10 @@ const Jugadores = () => {
          results.forEach((result, index) => {
             if (result.status === "fulfilled" && result.value.ok) {
                eliminados.push(codJugadoresAEliminar[index]);
-               console.log("Jugador eliminado:", codJugadoresAEliminar[index]);
+               console.log(
+                  "CustomJugador eliminado:",
+                  codJugadoresAEliminar[index]
+               );
             } else {
                console.error(
                   `Error al eliminar el jugador ${codJugadoresAEliminar[index]}`
@@ -138,8 +199,21 @@ const Jugadores = () => {
             );
             setSelectedToRemove(new Map());
          }
+         showMessage({
+            message:
+               jugadoresAEliminar.length > 1
+                  ? "Jugadores eliminados"
+                  : "Jugador eliminado",
+
+            backgroundColor: colors.blue.blue400,
+            textStyle: { fontSize: fontSizes.regular },
+         });
       } catch (error) {
          console.error("Error al eliminar los jugadores:", error);
+         showMessage({
+            message: "Algo salio mal",
+            backgroundColor: colors.red.red500,
+         });
       }
    };
 
@@ -275,11 +349,20 @@ const Jugadores = () => {
                            },
                         ]}
                      >
-                        <Image
-                           source={require("../../assets/images/peter-griffin-basketball.gif")}
-                           style={styles.playerImage}
-                           resizeMode="cover"
-                        />
+                        {item.assetType === "lottie" ? (
+                           <LottieView
+                              autoPlay
+                              loop
+                              style={styles.playerImage}
+                              source={item.selectedAsset}
+                           />
+                        ) : (
+                           <Image
+                              source={item.selectedAsset}
+                              style={styles.playerImage}
+                              resizeMode="cover"
+                           />
+                        )}
                         <View style={styles.playerInfoContainer}>
                            <Text
                               style={[

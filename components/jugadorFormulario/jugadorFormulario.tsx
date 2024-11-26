@@ -147,10 +147,15 @@ export default function JugadorFormulario({
          <View style={styles.container}>
             {/* Encabezado */}
             <View style={styles.header}>
-               <Text style={styles.title}>Crear nuevo jugador</Text>
+               <Text style={styles.title}>
+                  {initialJugador
+                     ? "Informacion del jugador"
+                     : "Crear nuevo jugador"}
+               </Text>
                <Text style={styles.subtitle}>
-                  Llena este formulario para crear un nuevo jugador en la base
-                  de datos
+                  {initialJugador
+                     ? "Puedes actualizar la informacion de este jugador"
+                     : "Llena este formulario para crear un nuevo jugador en la base de datos"}
                </Text>
             </View>
             {/* Campos del Formulario */}
