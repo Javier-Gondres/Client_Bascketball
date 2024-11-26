@@ -14,13 +14,14 @@ import { fontSizes } from "@/UI/fontSizes";
 import { colors } from "@/UI/colors";
 
 export interface SelectorProps<T> {
-   onAccept: (item: T) => void;
+   onAccept: (item: T | null) => void;
    onCancel: () => void;
    fetchUrl: string;
    keyExtractor: (item: T) => string;
    labelExtractor: (item: T) => string;
    headerTitle: string;
    headerSubtitle: string;
+   initialEntity?: T | null;
 }
 
 export default function SelectorEntidad<T>({
@@ -31,11 +32,16 @@ export default function SelectorEntidad<T>({
    labelExtractor,
    headerTitle,
    headerSubtitle,
+   initialEntity,
 }: SelectorProps<T>) {
    const [selected, setSelected] = useState<T | null>(null);
    const [entities, setEntities] = useState<T[]>([]);
 
    useEffect(() => {
+      if (initialEntity) {
+         setSelected(initialEntity);
+      }
+
       const fetchData = async () => {
          try {
             const response = await fetch(fetchUrl);
@@ -111,13 +117,10 @@ export default function SelectorEntidad<T>({
                Cancelar
             </Button>
             <Button
-               disabled={!selected}
-               onPress={() => selected && onAccept(selected)}
+               // disabled={!selected}
+               onPress={() => onAccept(selected)}
                labelStyle={{ color: colors.white }}
-               contentStyle={[
-                  styles.acceptButtonContent,
-                  !selected && styles.acceptButtonDisabled,
-               ]}
+               contentStyle={[styles.acceptButtonContent]}
                style={styles.acceptButton}
                mode="contained"
             >
@@ -131,7 +134,7 @@ export default function SelectorEntidad<T>({
 const styles = StyleSheet.create({
    container: {
       flex: 1,
-			width: '100%',
+      width: "100%",
       backgroundColor: colors.blue.blue100,
       borderRadius: 10,
       padding: spacings.s4,

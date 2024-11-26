@@ -5,7 +5,6 @@ import {
    Platform,
    Modal,
    StyleSheet,
-   KeyboardTypeOptions,
 } from "react-native";
 import {
    useForm,
@@ -16,14 +15,13 @@ import {
    FieldErrors,
    Path,
 } from "react-hook-form";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { spacings } from "@/UI/spacings";
 import { fontSizes } from "@/UI/fontSizes";
 import { colors } from "@/UI/colors";
 import { TextInput, Text, Button, TextInputProps } from "react-native-paper";
-import { BottomSheetScrollView, BottomSheetView } from "@gorhom/bottom-sheet";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Ciudad, Equipo } from "@/interfaces/entities";
+import { Ciudad, Equipo, Jugador } from "@/interfaces/entities";
 import Selector from "../selectorEntidad/SelectorEntidad";
 import { ports } from "@/config/config";
 
@@ -45,27 +43,64 @@ export interface Props {
 
 export default function JugadorFormulario({ onAccept, onCancel }: Props) {
    const [loading, setLoading] = useState(false);
+
    const {
       control,
       handleSubmit,
       formState: { errors },
+      setError,
+      watch,
    } = useForm<FormularioJugador>({
       defaultValues: {
          primerNombre: "",
          segundoNombre: null,
          primerApellido: "",
          segundoApellido: null,
+         numero: "",
          fechaNacimiento: new Date(),
          ciudadDeNacimiento: null,
          equipo: null,
-         numero: "0",
       },
    });
 
    const onSubmit = async (data: FormularioJugador) => {
       setLoading(true);
+    //   if (data.equipo) {
+    //      const jugadores = await findOtherPlayerWithSameNumber(
+    //         data.numero,
+    //         data.equipo.CodEquipo
+    //      );
+
+    //      if (jugadores.length > 0) {
+    //         setError("numero", {
+    //            message: "Ya hay un jugador con este numero en el equipo",
+    //         });
+    //      }
+    //      setLoading(false);
+    //      return;
+    //   }
       onAccept(data).finally(() => setLoading(false));
    };
+
+//    const findOtherPlayerWithSameNumber = async (
+//       number: string,
+//       codeEquipo: string
+//    ) => {
+//       try {
+//          const response = await fetch(
+//             `${ports.api}/jugador/buscar?Numero=${number}&CodEquipo${codeEquipo}`,
+//             {
+//                method: "GET",
+//             }
+//          );
+//          const data: Jugador[] = await response.json();
+//          console.log({ data });
+//          return data;
+//       } catch (error) {
+//          console.error(error);
+//          return [];
+//       }
+//    };
 
    return (
       <BottomSheetScrollView style={{ flexGrow: 1 }}>
@@ -112,10 +147,15 @@ export default function JugadorFormulario({ onAccept, onCancel }: Props) {
                   control={control}
                   rules={{
                      required: "Este campo es obligatorio",
+                     pattern: {
+                        value: /^[0-9]{1,2}$/,
+                        message: "Ingrese un número válido de hasta 2 dígitos",
+                     },
                   }}
                   errors={errors}
                   textInputProps={{
                      maxLength: 2,
+                     keyboardType: "numeric",
                   }}
                />
                <DatePickerField
@@ -129,14 +169,14 @@ export default function JugadorFormulario({ onAccept, onCancel }: Props) {
                   label="Ciudad de nacimiento"
                   name="ciudadDeNacimiento"
                   control={control}
-                  //  rules={{ required: "Este campo es obligatorio" }}
+                  initial={watch("ciudadDeNacimiento")}
                   errors={errors}
                />
                <EquipoSelectorField<FormularioJugador>
                   label="Equipo"
                   name="equipo"
                   control={control}
-                  //  rules={{ required: "Este campo es obligatorio" }}
+                  initial={watch("equipo")}
                   errors={errors}
                />
                {/* Botones */}
@@ -194,18 +234,20 @@ const TextInputField = ({
          control={control}
          name={name}
          rules={rules}
-         render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-               {...textInputProps}
-               mode="outlined"
-               style={styles.textInput}
-               activeOutlineColor={colors.blue.blue600}
-               onBlur={onBlur}
-               onChangeText={onChange}
-               value={value}
-               error={!!errors[name]}
-            />
-         )}
+         render={({ field: { onChange, onBlur, value } }) => {
+            return (
+               <TextInput
+                  {...textInputProps}
+                  mode="outlined"
+                  style={styles.textInput}
+                  activeOutlineColor={colors.blue.blue600}
+                  onBlur={onBlur}
+                  onChangeText={(text) => onChange(text)}
+                  value={value ?? ""}
+                  error={!!errors[name]}
+               />
+            );
+         }}
       />
       {errors[name] && (
          <Text style={styles.errorText}>{errors[name]?.message}</Text>
@@ -302,6 +344,7 @@ function CiudadSelectorField({
    control,
    rules,
    errors,
+   initial,
 }: {
    label: string;
    name: string;
@@ -313,6 +356,7 @@ function CiudadSelectorField({
            "valueAsNumber" | "valueAsDate" | "setValueAs" | "disabled"
         >
       | undefined;
+   initial?: Ciudad | null;
 }) {
    const [showCitySelector, setShowCitySelector] = useState(false);
 
@@ -372,6 +416,7 @@ function CiudadSelectorField({
                            labelExtractor={(item) => item.Nombre}
                            headerTitle="Ciudades disponibles"
                            headerSubtitle="Elige la ciudad"
+                           initialEntity={initial}
                         />
                      </View>
                   </Modal>
@@ -391,6 +436,7 @@ interface SelectorFieldProps<T extends FieldValues> {
       "valueAsNumber" | "valueAsDate" | "setValueAs" | "disabled"
    >;
    errors: FieldErrors<T>;
+   initial?: Equipo | null;
 }
 
 export function EquipoSelectorField<T extends FieldValues>({
@@ -399,6 +445,7 @@ export function EquipoSelectorField<T extends FieldValues>({
    control,
    rules,
    errors,
+   initial,
 }: SelectorFieldProps<T>) {
    const [showSelector, setShowSelector] = useState(false);
 
@@ -458,6 +505,7 @@ export function EquipoSelectorField<T extends FieldValues>({
                            labelExtractor={(item) => item.Nombre}
                            headerTitle="Equipos disponibles"
                            headerSubtitle="Elige el equipo"
+                           initialEntity={initial}
                         />
                      </View>
                   </Modal>
