@@ -9,7 +9,7 @@ export default function RootLayout() {
    return (
       <>
          <StatusBar backgroundColor={colors.blueLight} />
-         <Tabs screenOptions={{ animation: "shift" }}>
+         <Tabs screenOptions={{ headerShown: false }}>
             <Tabs.Screen
                name="jugador"
                options={{

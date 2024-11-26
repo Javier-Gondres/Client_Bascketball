@@ -1,19 +1,27 @@
 import { colors } from "@/UI/colors";
-import { NavigationContainer } from "@react-navigation/native";
-import { Stack, Tabs } from "expo-router";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { Stack } from "expo-router";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { PaperProvider } from "react-native-paper";
 
 export default function RootLayout() {
    return (
-      <Stack>
-         <Stack.Screen
-            name="index"
-            options={{
-               headerStyle: {
-                  backgroundColor: colors.blue.blue400,
-               },
-            }}
-         />
-         <Stack.Screen name="home" options={{ headerShown: false }} />
-      </Stack>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+         <BottomSheetModalProvider>
+            <PaperProvider>
+               <Stack>
+                  <Stack.Screen
+                     name="index"
+                     options={{
+                        headerStyle: {
+                           backgroundColor: colors.blue.blue400,
+                        },
+                     }}
+                  />
+                  <Stack.Screen name="home" options={{ headerShown: false }} />
+               </Stack>
+            </PaperProvider>
+         </BottomSheetModalProvider>
+      </GestureHandlerRootView>
    );
 }

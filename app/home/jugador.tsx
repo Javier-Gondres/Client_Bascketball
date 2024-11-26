@@ -5,7 +5,7 @@ import {
    FlatList,
    Image,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { colors } from "@/UI/colors";
 import { TextInput, Text } from "react-native-paper";
 import { fontSizes } from "@/UI/fontSizes";
@@ -14,28 +14,69 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FontAwesome } from "@expo/vector-icons";
 import { ports } from "@/config/config";
 import { Jugador } from "@/interfaces/entities";
+import CBottomSheetModal from "@/components/CBottomsheet";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import JugadorFormulario from "@/components/jugadorFormulario/jugadorFormulario";
 
 const jugador = () => {
    const [jugadores, setJugadores] = useState<Jugador[]>([]);
    const [crudMode, setCrudMode] = useState<"create" | "delete" | "none">(
       "none"
    );
+   const [refreshing, setRefreshing] = useState(false);
+   const bottomSheetCreate = useRef<BottomSheetModal>(null);
 
    useEffect(() => {
-      const fetchData = async () => {
-         try {
-            const response = await fetch(`${ports.api}/jugador`, {
-               method: "GET",
-            });
-            const data: Jugador[] = await response.json();
-            setJugadores(data);
-         } catch (error) {
-            console.error(error);
-         }
-      };
-
       fetchData();
    }, []);
+   const fetchData = async () => {
+      try {
+         const response = await fetch(`${ports.api}/jugador`, {
+            method: "GET",
+         });
+         const data: Jugador[] = await response.json();
+         setJugadores(data);
+      } catch (error) {
+         console.error(error);
+      }
+   };
+
+   const presentBottomSheet = (ref: React.RefObject<BottomSheetModal>) => {
+      ref.current?.present();
+   };
+
+   const closeBottomSheet = (ref: React.RefObject<BottomSheetModal>) => {
+      ref.current?.close();
+   };
+
+   const createJugador = async (
+      jugador: Omit<
+         Jugador,
+         "ciudad" | "equipo" | "estadisticasDeJuego" | "CodJugador"
+      >
+   ) => {
+      try {
+         const response = await fetch(`${ports.api}/jugador`, {
+            method: "POST",
+            headers: {
+               "Content-Type": "application/json",
+            },
+            body: JSON.stringify(jugador),
+         });
+
+         if (!response.ok) {
+            throw new Error(
+               `Error al crear el jugador: ${response.statusText}`
+            );
+         }
+
+         const data: Jugador = await response.json();
+         setJugadores((prev) => [data, ...prev]);
+         console.log("Jugador creado: ", data.CodJugador);
+      } catch (error) {
+         console.error("Error al crear el jugador:", error);
+      }
+   };
 
    return (
       <SafeAreaView
@@ -88,7 +129,10 @@ const jugador = () => {
             </View>
             <View style={{ flexDirection: "row", gap: spacings.s2 }}>
                <TouchableOpacity
-                  onPress={() => setCrudMode("none")}
+                  onPress={() => {
+                     setCrudMode("none");
+                     presentBottomSheet(bottomSheetCreate);
+                  }}
                   style={{
                      backgroundColor: colors.white,
                      justifyContent: "center",
@@ -134,6 +178,11 @@ const jugador = () => {
                </TouchableOpacity>
             </View>
             <FlatList
+               refreshing={refreshing}
+               onRefresh={() => {
+                  setRefreshing(true);
+                  fetchData().finally(() => setRefreshing(false));
+               }}
                data={jugadores}
                numColumns={2}
                columnWrapperStyle={{ gap: 10 }}
@@ -202,6 +251,29 @@ const jugador = () => {
                )}
             />
          </View>
+         <CBottomSheetModal
+            cRef={bottomSheetCreate}
+            index={1}
+            snapPoints={["60%", "90%"]}
+            backgroundStyle={{ backgroundColor: colors.blue.blue200 }}
+         >
+            <JugadorFormulario
+               onAccept={async (form) => {
+                  await createJugador({
+                     Apellido1: form.primerApellido,
+                     Apellido2: form.segundoApellido,
+                     CiudadNacim: form.ciudadDeNacimiento?.CodCiudad ?? null,
+                     CodEquipo: form.equipo?.CodEquipo ?? null,
+                     FechaNacim: form.fechaNacimiento,
+                     Nombre1: form.primerNombre,
+                     Nombre2: form.segundoNombre,
+                     Numero: form.numero,
+                  });
+                  closeBottomSheet(bottomSheetCreate);
+               }}
+               onCancel={() => closeBottomSheet(bottomSheetCreate)}
+            />
+         </CBottomSheetModal>
       </SafeAreaView>
    );
 };

@@ -4,10 +4,10 @@ export interface Jugador {
    Nombre2: string | null;
    Apellido1: string;
    Apellido2: string | null;
-   CiudadNacim: string;
+   CiudadNacim: string | null;
    FechaNacim: Date;
    Numero: string;
-   CodEquipo: string;
+   CodEquipo: string | null;
    ciudad: Ciudad | null;
    equipo: Equipo | null;
    estadisticasDeJuego: EstadisticaJuego[];
