@@ -1,4 +1,3 @@
-// Importaciones
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
    View,
@@ -9,12 +8,11 @@ import {
    Modal,
    StyleSheet,
 } from "react-native";
-import { TextInput, Text } from "react-native-paper";
+import { Text, Searchbar } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FontAwesome } from "@expo/vector-icons";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 
-// Importaciones personalizadas
 import { colors } from "@/UI/colors";
 import { fontSizes } from "@/UI/fontSizes";
 import { spacings } from "@/UI/spacings";
@@ -26,6 +24,7 @@ import PopUp from "@/components/popup/PopUp";
 
 const Jugadores = () => {
    const [jugadores, setJugadores] = useState<Jugador[]>([]);
+   const [searchQuery, setSearchQuery] = useState("");
    const [selected, setSelected] = useState<Jugador | null>(null);
    const [selectedToRemove, setSelectedToRemove] = useState<
       Map<string, Jugador>
@@ -144,6 +143,13 @@ const Jugadores = () => {
       }
    };
 
+   const filteredJugadores = jugadores.filter((jugador) => {
+      const nombreCompleto = `${jugador.Nombre1} ${jugador.Nombre2 || ""} ${
+         jugador.Apellido1
+      } ${jugador.Apellido2 || ""}`.toLowerCase();
+      return nombreCompleto.includes(searchQuery.toLowerCase());
+   });
+
    return (
       <SafeAreaView style={[styles.container, { paddingTop: insets.top + 20 }]}>
          <View style={{ flex: 1, gap: spacings.s2 }}>
@@ -157,18 +163,12 @@ const Jugadores = () => {
 
             {/* Barra de búsqueda */}
             <View style={styles.searchContainer}>
-               <TextInput
-                  mode="outlined"
+               <Searchbar
+                  value={searchQuery}
+                  onChangeText={(query) => setSearchQuery(query)}
                   style={styles.searchInput}
-                  activeOutlineColor={colors.blue.blue600}
-                  placeholder="Buscar jugador..."
+                  placeholder="Buscar jugador por nombre"
                />
-               <TouchableOpacity
-                  onPress={() => console.log("Buscar")}
-                  style={styles.searchButton}
-               >
-                  <FontAwesome name="search" size={20} color="white" />
-               </TouchableOpacity>
             </View>
 
             {/* Botones de acción */}
@@ -231,7 +231,7 @@ const Jugadores = () => {
 
             {/* Lista de jugadores */}
             <FlatList
-               data={jugadores}
+               data={filteredJugadores}
                keyExtractor={(item) => item.CodJugador}
                numColumns={2}
                columnWrapperStyle={{ gap: spacings.s2 }}
@@ -411,18 +411,12 @@ const styles = StyleSheet.create({
       fontWeight: "400",
    },
    searchContainer: {
-      flexDirection: "row",
       gap: spacings.s2,
+      marginBottom: spacings.s1,
    },
    searchInput: {
-      flex: 1,
-   },
-   searchButton: {
-      flex: 0.2,
-      backgroundColor: colors.blue.blue600,
-      justifyContent: "center",
-      alignItems: "center",
-      borderRadius: 10,
+      backgroundColor: colors.white,
+      borderRadius: 8,
    },
    actionButtonsContainer: {
       flexDirection: "row",
