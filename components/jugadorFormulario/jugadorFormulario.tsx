@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
    TouchableOpacity,
    View,
@@ -39,9 +39,14 @@ export interface FormularioJugador {
 export interface Props {
    onAccept: (form: FormularioJugador) => Promise<void>;
    onCancel: () => void;
+   initialJugador?: Jugador | null;
 }
 
-export default function JugadorFormulario({ onAccept, onCancel }: Props) {
+export default function JugadorFormulario({
+   onAccept,
+   onCancel,
+   initialJugador,
+}: Props) {
    const [loading, setLoading] = useState(false);
 
    const {
@@ -50,6 +55,7 @@ export default function JugadorFormulario({ onAccept, onCancel }: Props) {
       formState: { errors },
       setError,
       watch,
+      reset,
    } = useForm<FormularioJugador>({
       defaultValues: {
          primerNombre: "",
@@ -62,6 +68,36 @@ export default function JugadorFormulario({ onAccept, onCancel }: Props) {
          equipo: null,
       },
    });
+
+   useEffect(() => {
+      const initialize = async () => {
+         if (initialJugador) {
+            let ciudad = null;
+            let equipo = null;
+
+            if (initialJugador.CiudadNacim) {
+               ciudad = await findCiudad(initialJugador.CiudadNacim);
+            }
+            if (initialJugador.CodEquipo) {
+               equipo = await findEquipo(initialJugador.CodEquipo);
+            }
+
+            reset({
+               primerNombre: initialJugador.Nombre1 || "",
+               segundoNombre: initialJugador.Nombre2 || null,
+               primerApellido: initialJugador.Apellido1 || "",
+               segundoApellido: initialJugador.Apellido2 || null,
+               numero: initialJugador.Numero || "",
+               fechaNacimiento: initialJugador.FechaNacim
+                  ? new Date(initialJugador.FechaNacim)
+                  : new Date(),
+               ciudadDeNacimiento: ciudad,
+               equipo,
+            });
+         }
+      };
+      initialize();
+   }, [initialJugador, reset]);
 
    const onSubmit = async (data: FormularioJugador) => {
       setLoading(true);
@@ -82,25 +118,29 @@ export default function JugadorFormulario({ onAccept, onCancel }: Props) {
       onAccept(data).finally(() => setLoading(false));
    };
 
-   //    const findOtherPlayerWithSameNumber = async (
-   //       number: string,
-   //       codeEquipo: string
-   //    ) => {
-   //       try {
-   //          const response = await fetch(
-   //             `${ports.api}/jugador/buscar?Numero=${number}&CodEquipo${codeEquipo}`,
-   //             {
-   //                method: "GET",
-   //             }
-   //          );
-   //          const data: Jugador[] = await response.json();
-   //          console.log({ data });
-   //          return data;
-   //       } catch (error) {
-   //          console.error(error);
-   //          return [];
-   //       }
-   //    };
+   const findCiudad = async (codigo: string) => {
+      try {
+         const response = await fetch(`${ports.api}/ciudad/${codigo}`, {
+            method: "GET",
+         });
+         const data: Ciudad = await response.json();
+         return data;
+      } catch (error) {
+         console.error(error);
+      }
+   };
+
+   const findEquipo = async (codigo: string) => {
+      try {
+         const response = await fetch(`${ports.api}/equipo/${codigo}`, {
+            method: "GET",
+         });
+         const data: Equipo = await response.json();
+         return data;
+      } catch (error) {
+         console.error(error);
+      }
+   };
 
    return (
       <BottomSheetScrollView style={{ flexGrow: 1 }}>
@@ -151,11 +191,16 @@ export default function JugadorFormulario({ onAccept, onCancel }: Props) {
                         value: /^[0-9]{1,2}$/,
                         message: "Ingrese un número válido de hasta 2 dígitos",
                      },
+                     minLength: {
+                        value: 2,
+                        message: "Debe ingresar 2 digitos",
+                     },
                   }}
                   errors={errors}
                   textInputProps={{
                      maxLength: 2,
                      keyboardType: "numeric",
+                     placeholder: "00",
                   }}
                />
                <DatePickerField
@@ -199,7 +244,7 @@ export default function JugadorFormulario({ onAccept, onCancel }: Props) {
                      style={styles.acceptButton}
                      mode="contained"
                   >
-                     Aceptar
+                     {initialJugador ? "Actualizar" : "Aceptar"}
                   </Button>
                </View>
             </View>

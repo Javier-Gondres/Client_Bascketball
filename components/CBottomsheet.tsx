@@ -1,5 +1,9 @@
 import React, { MutableRefObject, RefObject, useEffect, useRef } from "react";
-import { BottomSheetModal, BottomSheetProps } from "@gorhom/bottom-sheet";
+import {
+   BottomSheetModal,
+   BottomSheetModalProps,
+   BottomSheetProps,
+} from "@gorhom/bottom-sheet";
 import { BackHandler } from "react-native";
 
 enum ModalStates {
@@ -7,7 +11,7 @@ enum ModalStates {
    CLOSE,
 }
 
-interface CBottomSheetModal extends BottomSheetProps {
+interface CBottomSheetModal extends BottomSheetModalProps {
    cRef?: RefObject<BottomSheetModal>;
 }
 
@@ -57,5 +61,10 @@ export default function CBottomSheetModal({
 
       return () => backHandler.remove();
    }, []);
-   return <BottomSheetModal ref={true_ref} {...props} />;
+   return (
+      <BottomSheetModal
+         ref={true_ref}
+         {...props}
+      />
+   );
 }

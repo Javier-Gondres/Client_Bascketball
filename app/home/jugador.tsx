@@ -20,6 +20,7 @@ import JugadorFormulario from "@/components/jugadorFormulario/jugadorFormulario"
 
 const jugador = () => {
    const [jugadores, setJugadores] = useState<Jugador[]>([]);
+   const [selected, setSelected] = useState<Jugador | null>(null);
    const [crudMode, setCrudMode] = useState<"create" | "delete" | "none">(
       "none"
    );
@@ -29,6 +30,7 @@ const jugador = () => {
    useEffect(() => {
       fetchData();
    }, []);
+
    const fetchData = async () => {
       try {
          const response = await fetch(`${ports.api}/jugador`, {
@@ -73,6 +75,49 @@ const jugador = () => {
          const data: Jugador = await response.json();
          setJugadores((prev) => [data, ...prev]);
          console.log("Jugador creado: ", data.CodJugador);
+      } catch (error) {
+         console.error("Error al crear el jugador:", error);
+      }
+   };
+
+   const updateJugador = async (
+      codigo: string,
+      jugador: Omit<
+         Jugador,
+         "ciudad" | "equipo" | "estadisticasDeJuego" | "CodJugador"
+      >
+   ) => {
+      try {
+         const response = await fetch(`${ports.api}/jugador/${codigo}`, {
+            method: "PATCH",
+            headers: {
+               "Content-Type": "application/json",
+            },
+            body: JSON.stringify(jugador),
+         });
+
+         if (response.status != 200) {
+            throw new Error(
+               `Error al actualizar el jugador: ${response.statusText}`
+            );
+         }
+
+         const data: Jugador = await response.json();
+         setJugadores((prev) => {
+            const oldArr = [...prev];
+            const index = oldArr.findIndex(
+               (j) => j.CodJugador === data.CodJugador
+            );
+
+            if (index !== -1) {
+               oldArr[index] = data;
+            } else {
+               oldArr.push(data);
+            }
+
+            return oldArr;
+         });
+         console.log("Jugador actalizado: ", data.CodJugador);
       } catch (error) {
          console.error("Error al crear el jugador:", error);
       }
@@ -189,6 +234,10 @@ const jugador = () => {
                contentContainerStyle={{ gap: 10, paddingBottom: 10 }}
                renderItem={({ item }) => (
                   <TouchableOpacity
+                     onPress={() => {
+                        setSelected(item);
+                        presentBottomSheet(bottomSheetCreate);
+                     }}
                      style={{
                         backgroundColor: colors.white,
                         maxWidth: 190,
@@ -255,11 +304,13 @@ const jugador = () => {
             cRef={bottomSheetCreate}
             index={1}
             snapPoints={["60%", "90%"]}
+            onDismiss={() => setSelected(null)}
             backgroundStyle={{ backgroundColor: colors.blue.blue200 }}
          >
             <JugadorFormulario
+               initialJugador={selected}
                onAccept={async (form) => {
-                  await createJugador({
+                  const data = {
                      Apellido1: form.primerApellido,
                      Apellido2: form.segundoApellido,
                      CiudadNacim: form.ciudadDeNacimiento?.CodCiudad ?? null,
@@ -268,10 +319,15 @@ const jugador = () => {
                      Nombre1: form.primerNombre,
                      Nombre2: form.segundoNombre,
                      Numero: form.numero,
-                  });
+                  };
+                  if (selected) {
+                     await updateJugador(selected.CodJugador, data);
+                  } else await createJugador(data);
                   closeBottomSheet(bottomSheetCreate);
                }}
-               onCancel={() => closeBottomSheet(bottomSheetCreate)}
+               onCancel={() => {
+                  closeBottomSheet(bottomSheetCreate);
+               }}
             />
          </CBottomSheetModal>
       </SafeAreaView>
