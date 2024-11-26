@@ -388,7 +388,7 @@ const DatePickerField = ({
    );
 };
 
-function CiudadSelectorField({
+export function CiudadSelectorField({
    label,
    name,
    control,

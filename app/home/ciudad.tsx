@@ -246,7 +246,9 @@ const Ciudades = () => {
                </TouchableOpacity>
                {crudMode === "delete" && (
                   <TouchableOpacity
-                     onPress={() => setShowRemoveModal(true)}
+                     onPress={() =>
+                        selectedToRemove.size > 0 && setShowRemoveModal(true)
+                     }
                      style={styles.deleteAllButton}
                   >
                      <FontAwesome name="trash" size={20} color={colors.white} />

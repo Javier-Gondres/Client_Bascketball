@@ -44,7 +44,7 @@ export interface Estadistica {
 export interface Equipo {
    CodEquipo: string;
    Nombre: string;
-   CodCiudad: string;
+   CodCiudad: string | null;
    ciudad: Ciudad | null;
    jugadores?: Jugador[];
    juegosEquipo1?: Juego[];
