@@ -65,42 +65,42 @@ export default function JugadorFormulario({ onAccept, onCancel }: Props) {
 
    const onSubmit = async (data: FormularioJugador) => {
       setLoading(true);
-    //   if (data.equipo) {
-    //      const jugadores = await findOtherPlayerWithSameNumber(
-    //         data.numero,
-    //         data.equipo.CodEquipo
-    //      );
+      //   if (data.equipo) {
+      //      const jugadores = await findOtherPlayerWithSameNumber(
+      //         data.numero,
+      //         data.equipo.CodEquipo
+      //      );
 
-    //      if (jugadores.length > 0) {
-    //         setError("numero", {
-    //            message: "Ya hay un jugador con este numero en el equipo",
-    //         });
-    //      }
-    //      setLoading(false);
-    //      return;
-    //   }
+      //      if (jugadores.length > 0) {
+      //         setError("numero", {
+      //            message: "Ya hay un jugador con este numero en el equipo",
+      //         });
+      //      }
+      //      setLoading(false);
+      //      return;
+      //   }
       onAccept(data).finally(() => setLoading(false));
    };
 
-//    const findOtherPlayerWithSameNumber = async (
-//       number: string,
-//       codeEquipo: string
-//    ) => {
-//       try {
-//          const response = await fetch(
-//             `${ports.api}/jugador/buscar?Numero=${number}&CodEquipo${codeEquipo}`,
-//             {
-//                method: "GET",
-//             }
-//          );
-//          const data: Jugador[] = await response.json();
-//          console.log({ data });
-//          return data;
-//       } catch (error) {
-//          console.error(error);
-//          return [];
-//       }
-//    };
+   //    const findOtherPlayerWithSameNumber = async (
+   //       number: string,
+   //       codeEquipo: string
+   //    ) => {
+   //       try {
+   //          const response = await fetch(
+   //             `${ports.api}/jugador/buscar?Numero=${number}&CodEquipo${codeEquipo}`,
+   //             {
+   //                method: "GET",
+   //             }
+   //          );
+   //          const data: Jugador[] = await response.json();
+   //          console.log({ data });
+   //          return data;
+   //       } catch (error) {
+   //          console.error(error);
+   //          return [];
+   //       }
+   //    };
 
    return (
       <BottomSheetScrollView style={{ flexGrow: 1 }}>
