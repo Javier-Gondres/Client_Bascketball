@@ -24,6 +24,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ciudad, Equipo, Jugador } from "@/interfaces/entities";
 import Selector from "../selectorEntidad/SelectorEntidad";
 import { ports } from "@/config/config";
+import moment from "moment";
 
 export interface FormularioJugador {
    primerNombre: string;
@@ -305,7 +306,7 @@ const TextInputField = ({
    </View>
 );
 
-const DatePickerField = ({
+export const DatePickerField = ({
    label,
    name,
    control,
@@ -332,57 +333,59 @@ const DatePickerField = ({
             control={control}
             name={name}
             rules={rules}
-            render={({ field: { onChange, value } }) => (
-               <>
-                  <TouchableOpacity
-                     onPress={() => setShowDatePicker(true)}
-                     style={[
-                        styles.datePickerButton,
-                        {
-                           borderColor: errors[name]
-                              ? colors.red.red500
-                              : colors.blue.blue600,
-                        },
-                     ]}
-                  >
-                     <Text
+            render={({ field: { onChange, value } }) => {
+               return (
+                  <>
+                     <TouchableOpacity
+                        onPress={() => setShowDatePicker(true)}
                         style={[
-                           styles.datePickerText,
+                           styles.datePickerButton,
                            {
-                              color: value
-                                 ? colors.blue.blue900
-                                 : colors.gray.gray500,
+                              borderColor: errors[name]
+                                 ? colors.red.red500
+                                 : colors.blue.blue600,
                            },
                         ]}
                      >
-                        {value
-                           ? value.toLocaleDateString()
-                           : "Selecciona una fecha"}
-                     </Text>
-                  </TouchableOpacity>
-                  {errors[name] && (
-                     <Text style={styles.errorText}>
-                        {errors[name]?.message}
-                     </Text>
-                  )}
-                  {showDatePicker && (
-                     <DateTimePicker
-                        value={value || new Date()}
-                        mode="date"
-                        display="default"
-                        onChange={(event, selectedDate) => {
-                           if (Platform.OS !== "ios") {
-                              setShowDatePicker(false);
-                           }
-                           if (event.type === "set" && selectedDate) {
-                              onChange(selectedDate);
-                           }
-                        }}
-                        maximumDate={new Date()}
-                     />
-                  )}
-               </>
-            )}
+                        <Text
+                           style={[
+                              styles.datePickerText,
+                              {
+                                 color: value
+                                    ? colors.blue.blue900
+                                    : colors.gray.gray500,
+                              },
+                           ]}
+                        >
+                           {value
+                              ? moment(value).format("DD/MM/YYYY")
+                              : "Selecciona una fecha"}
+                        </Text>
+                     </TouchableOpacity>
+                     {errors[name] && (
+                        <Text style={styles.errorText}>
+                           {errors[name]?.message}
+                        </Text>
+                     )}
+                     {showDatePicker && (
+                        <DateTimePicker
+                           value={value || new Date()}
+                           mode="date"
+                           display="calendar"
+                           onChange={(event, selectedDate) => {
+                              if (Platform.OS !== "ios") {
+                                 setShowDatePicker(false);
+                              }
+                              if (event.type === "set" && selectedDate) {
+                                 onChange(selectedDate);
+                              }
+                           }}
+                           maximumDate={new Date()}
+                        />
+                     )}
+                  </>
+               );
+            }}
          />
       </View>
    );

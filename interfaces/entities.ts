@@ -19,8 +19,8 @@ export interface Juego {
    Equipo1: string;
    Equipo2: string;
    Fecha: Date;
-   Equipo1Entity?: Equipo;
-   Equipo2Entity?: Equipo;
+   Equipo1Entity: Equipo;
+   Equipo2Entity: Equipo;
    estadisticasDeJuego?: EstadisticaJuego[];
 }
 
