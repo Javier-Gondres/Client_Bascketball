@@ -61,10 +61,5 @@ export default function CBottomSheetModal({
 
       return () => backHandler.remove();
    }, []);
-   return (
-      <BottomSheetModal
-         ref={true_ref}
-         {...props}
-      />
-   );
+   return <BottomSheetModal ref={true_ref} {...props} />;
 }
