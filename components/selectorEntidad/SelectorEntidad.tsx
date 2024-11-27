@@ -22,6 +22,7 @@ export interface SelectorProps<T> {
    headerTitle: string;
    headerSubtitle: string;
    initialEntity?: T | null;
+   desactivar?: boolean;
 }
 
 export default function SelectorEntidad<T>({
@@ -33,6 +34,7 @@ export default function SelectorEntidad<T>({
    headerTitle,
    headerSubtitle,
    initialEntity,
+   desactivar,
 }: SelectorProps<T>) {
    const [selected, setSelected] = useState<T | null>(null);
    const [entities, setEntities] = useState<T[]>([]);
@@ -46,6 +48,7 @@ export default function SelectorEntidad<T>({
          try {
             const response = await fetch(fetchUrl);
             const data: T[] = await response.json();
+
             setEntities(data);
          } catch (error) {
             console.error("Error fetching data:", error);
@@ -117,10 +120,14 @@ export default function SelectorEntidad<T>({
                Cancelar
             </Button>
             <Button
-               // disabled={!selected}
+               disabled={desactivar && !selected}
                onPress={() => onAccept(selected)}
                labelStyle={{ color: colors.white }}
-               contentStyle={[styles.acceptButtonContent]}
+               contentStyle={[
+                  desactivar && !selected
+                     ? styles.acceptButtonDisabled
+                     : styles.acceptButtonContent,
+               ]}
                style={styles.acceptButton}
                mode="contained"
             >
@@ -200,5 +207,6 @@ const styles = StyleSheet.create({
    },
    acceptButtonDisabled: {
       backgroundColor: colors.gray.gray300,
+      height: 50,
    },
 });

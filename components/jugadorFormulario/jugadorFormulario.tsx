@@ -21,10 +21,17 @@ import { colors } from "@/UI/colors";
 import { TextInput, Text, Button, TextInputProps } from "react-native-paper";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Ciudad, Equipo, Jugador } from "@/interfaces/entities";
+import {
+   Ciudad,
+   Equipo,
+   Estadistica,
+   Juego,
+   Jugador,
+} from "@/interfaces/entities";
 import Selector from "../selectorEntidad/SelectorEntidad";
 import { ports } from "@/config/config";
 import moment from "moment";
+import { Item } from "react-native-paper/lib/typescript/components/Drawer/Drawer";
 
 export interface FormularioJugador {
    primerNombre: string;
@@ -489,7 +496,6 @@ interface SelectorFieldProps<T extends FieldValues> {
       "valueAsNumber" | "valueAsDate" | "setValueAs" | "disabled"
    >;
    errors: FieldErrors<T>;
-   initial?: Equipo | null;
 }
 
 export function EquipoSelectorField<T extends FieldValues>({
@@ -499,7 +505,7 @@ export function EquipoSelectorField<T extends FieldValues>({
    rules,
    errors,
    initial,
-}: SelectorFieldProps<T>) {
+}: SelectorFieldProps<T> & { initial: Equipo | null }) {
    const [showSelector, setShowSelector] = useState(false);
 
    return (
@@ -562,6 +568,306 @@ export function EquipoSelectorField<T extends FieldValues>({
                         />
                      </View>
                   </Modal>
+               </>
+            )}
+         />
+      </View>
+   );
+}
+
+export function JuegoSelectorField<T extends FieldValues>({
+   label,
+   name,
+   control,
+   rules,
+   errors,
+   initial,
+   desactivarBUtton,
+}: SelectorFieldProps<T> & { initial?: Juego; desactivarBUtton?: boolean }) {
+   const [showSelector, setShowSelector] = useState(false);
+
+   return (
+      <View style={styles.fieldContainer}>
+         <Text style={styles.fieldLabel}>{label}</Text>
+         <Controller
+            control={control}
+            name={name}
+            rules={rules}
+            render={({ field: { onChange, value } }) => (
+               <>
+                  <TouchableOpacity
+                     disabled={desactivarBUtton}
+                     onPress={() => setShowSelector(true)}
+                     style={[
+                        styles.datePickerButton,
+                        {
+                           borderColor: errors[name]
+                              ? colors.red.red500
+                              : colors.blue.blue600,
+                           backgroundColor: desactivarBUtton
+                              ? colors.gray.gray300
+                              : styles.datePickerButton.backgroundColor,
+                        },
+                     ]}
+                  >
+                     <Text
+                        style={[
+                           styles.datePickerText,
+                           {
+                              color: value
+                                 ? colors.blue.blue900
+                                 : colors.gray.gray500,
+                           },
+                        ]}
+                     >
+                        {value ? value.Descripcion : "Selecciona el juego"}
+                     </Text>
+                  </TouchableOpacity>
+                  {errors[name] && (
+                     <Text style={styles.errorText}>
+                        {errors[name].message?.toString()}
+                     </Text>
+                  )}
+                  <Modal
+                     visible={showSelector}
+                     transparent={true}
+                     animationType="slide"
+                     onRequestClose={() => setShowSelector(false)}
+                  >
+                     <View style={styles.modalOverlay}>
+                        <Selector<Juego>
+                           onAccept={(e) => {
+                              onChange(e);
+                              setShowSelector(false);
+                           }}
+                           onCancel={() => setShowSelector(false)}
+                           fetchUrl={`${ports.api}/juego`}
+                           keyExtractor={(item) => item.CodJuego.toString()}
+                           labelExtractor={(item) => item.Descripcion}
+                           headerTitle="Juegos disponibles"
+                           headerSubtitle="Elige el juego"
+                           initialEntity={initial}
+                        />
+                     </View>
+                  </Modal>
+               </>
+            )}
+         />
+      </View>
+   );
+}
+
+export function JugadorSelectorField<T extends FieldValues>({
+   label,
+   name,
+   control,
+   rules,
+   errors,
+   initial,
+   juegoElegido,
+   desactivar,
+   desactivarBUtton,
+   action,
+}: SelectorFieldProps<T> & {
+   initial?: Jugador;
+   juegoElegido: Juego | undefined;
+   desactivar?: boolean;
+   desactivarBUtton?: boolean;
+   action?: () => void;
+}) {
+   const [showSelector, setShowSelector] = useState(false);
+
+   return (
+      <View style={styles.fieldContainer}>
+         <Text style={styles.fieldLabel}>{label}</Text>
+         <Controller
+            control={control}
+            name={name}
+            rules={rules}
+            render={({ field: { onChange, value } }) => (
+               <>
+                  <TouchableOpacity
+                     disabled={!juegoElegido || desactivarBUtton}
+                     onPress={() => setShowSelector(true)}
+                     style={[
+                        styles.datePickerButton,
+                        {
+                           borderColor: errors[name]
+                              ? colors.red.red500
+                              : colors.blue.blue600,
+                           backgroundColor: desactivarBUtton
+                              ? colors.gray.gray300
+                              : styles.datePickerButton.backgroundColor,
+                        },
+                     ]}
+                  >
+                     <Text
+                        style={[
+                           styles.datePickerText,
+                           {
+                              color: value
+                                 ? colors.blue.blue900
+                                 : colors.gray.gray500,
+                           },
+                        ]}
+                     >
+                        {value
+                           ? `${value.Nombre1} ${value.Apellido1}. Equipo: ${value.equipo?.Nombre}`
+                           : "Selecciona el jugador"}
+                     </Text>
+                  </TouchableOpacity>
+                  {errors[name] && (
+                     <Text style={styles.errorText}>
+                        {errors[name].message?.toString()}
+                     </Text>
+                  )}
+                  {!juegoElegido && (
+                     <Text style={styles.errorText}>
+                        {
+                           "Debes seleccionar el juego para poder elegir a un jugador"
+                        }
+                     </Text>
+                  )}
+
+                  {juegoElegido && (
+                     <Modal
+                        visible={showSelector}
+                        transparent={true}
+                        animationType="slide"
+                        onRequestClose={() => setShowSelector(false)}
+                     >
+                        <View style={styles.modalOverlay}>
+                           <Selector<Jugador>
+                              desactivar={desactivar}
+                              onAccept={(e) => {
+                                 onChange(e);
+                                 setShowSelector(false);
+                                 if (action) action();
+                              }}
+                              onCancel={() => setShowSelector(false)}
+                              fetchUrl={`${ports.api}/jugador/buscar?equiposId=${juegoElegido?.Equipo1}&equiposId=${juegoElegido?.Equipo2}`}
+                              keyExtractor={(item) =>
+                                 item.CodJugador.toString()
+                              }
+                              labelExtractor={(item) =>
+                                 `${item.Nombre1} ${item.Apellido1}. Equipo: ${item.equipo?.Nombre}`
+                              }
+                              headerTitle="Jugadores disponibles"
+                              headerSubtitle="Elige el jugador"
+                              initialEntity={initial}
+                           />
+                        </View>
+                     </Modal>
+                  )}
+               </>
+            )}
+         />
+      </View>
+   );
+}
+
+export function EstadisticaSelectorField<T extends FieldValues>({
+   label,
+   name,
+   control,
+   rules,
+   errors,
+   initial,
+   jugadorElegido,
+   juegoElegido,
+   desactivarBUtton,
+}: SelectorFieldProps<T> & {
+   initial: Estadistica | undefined;
+   jugadorElegido: Jugador | undefined;
+   juegoElegido: Juego | undefined;
+   desactivar?: boolean;
+   desactivarBUtton?: boolean;
+}) {
+   const [showSelector, setShowSelector] = useState(false);
+
+   return (
+      <View style={styles.fieldContainer}>
+         <Text style={styles.fieldLabel}>{label}</Text>
+         <Controller
+            control={control}
+            name={name}
+            rules={rules}
+            render={({ field: { onChange, value } }) => (
+               <>
+                  <TouchableOpacity
+                     disabled={!jugadorElegido || desactivarBUtton}
+                     onPress={() => setShowSelector(true)}
+                     style={[
+                        styles.datePickerButton,
+                        {
+                           borderColor: errors[name]
+                              ? colors.red.red500
+                              : colors.blue.blue600,
+                           backgroundColor: desactivarBUtton
+                              ? colors.gray.gray300
+                              : styles.datePickerButton.backgroundColor,
+                        },
+                     ]}
+                  >
+                     <Text
+                        style={[
+                           styles.datePickerText,
+                           {
+                              color: value
+                                 ? colors.blue.blue900
+                                 : colors.gray.gray500,
+                           },
+                        ]}
+                     >
+                        {value
+                           ? value.Descripcion + ". " + "Valor: " + value.Valor
+                           : "Selecciona la estadistica"}
+                     </Text>
+                  </TouchableOpacity>
+                  {errors[name] && (
+                     <Text style={styles.errorText}>
+                        {errors[name].message?.toString()}
+                     </Text>
+                  )}
+                  {!jugadorElegido && (
+                     <Text style={styles.errorText}>
+                        {
+                           "Debes seleccionar el jugador para poder elegir su estadistica"
+                        }
+                     </Text>
+                  )}
+                  {jugadorElegido && juegoElegido && (
+                     <Modal
+                        visible={showSelector}
+                        transparent={true}
+                        animationType="slide"
+                        onRequestClose={() => setShowSelector(false)}
+                     >
+                        <View style={styles.modalOverlay}>
+                           <Selector<Estadistica>
+                              desactivar={true}
+                              onAccept={(equipo) => {
+                                 onChange(equipo);
+                                 setShowSelector(false);
+                              }}
+                              onCancel={() => setShowSelector(false)}
+                              fetchUrl={`${ports.api}/estadistica/jugador/${jugadorElegido.CodJugador}/juego/${juegoElegido.CodJuego}/faltantes`}
+                              keyExtractor={(item) =>
+                                 item.CodEstadistica.toString()
+                              }
+                              labelExtractor={(item) =>
+                                 item.Descripcion +
+                                 ". " +
+                                 "Valor: " +
+                                 item.Valor
+                              }
+                              headerTitle={`Estadisticas disponibles para ${jugadorElegido.Nombre1} en el juego ${juegoElegido.Descripcion}`}
+                              headerSubtitle="Estas son las estadísticas que el jugador aun no posee en este juego"
+                              initialEntity={initial}
+                           />
+                        </View>
+                     </Modal>
+                  )}
                </>
             )}
          />
